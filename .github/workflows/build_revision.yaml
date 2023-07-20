@@ -91,13 +91,9 @@ jobs:
     - name: 'Release debian files'
       uses: ncipollo/release-action@v1
       with:
-        tag: "v${{ env.GIT_VERSION }}"
+        tag: "${{ env.GIT_VERSION }}"
         artifacts: "deb/*.deb"
         allowUpdates: true
         omitBodyDuringUpdate: true
         omitNameDuringUpdate: true
         omitPrereleaseDuringUpdate: true
-        updateOnlyUnreleased: true
-        prerelease: true
-        generateReleaseNotes: true
-        bodyFile: RELEASE.md
