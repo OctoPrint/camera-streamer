@@ -39,7 +39,7 @@ jobs:
     - name: Set DEB_REVISION
       shell: bash
       run: |
-        revision="${{ github.event.inputs.debian_revision }}"
+        revision="${{ github.event.inputs.deb_revision }}"
         if [[ -n "$revision" ]]; then
           echo "DEB_REVISION=${revision}" >> $GITHUB_ENV
         else
