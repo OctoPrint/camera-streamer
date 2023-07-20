@@ -32,7 +32,7 @@ jobs:
           tag=$(git describe --tags --abbrev=0)
         fi
         echo "tag=$tag" >> "$GITHUB_OUTPUT"
-        echo "GIT_VERSION=$tag" >> "$GITHUB_ENV
+        echo "GIT_VERSION=$tag" >> "$GITHUB_ENV"
     - name: Determine latest revision
       id: get_revision
       run: |
