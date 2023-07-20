@@ -1,0 +1,65 @@
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "camera-streamer tag to build"
+        required: true
+        default: ''
+      deb_revision:
+        description: "Revision to use for the debian packages"
+        required: false
+        default: '1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        debian_version: [bullseye]
+        #docker_arch: [amd64, arm32v7, arm64v8]
+        docker_arch: [arm32v7]
+        #build_type: [generic, raspi]
+        build_type: [raspi]
+        exclude:
+          - docker_arch: amd64
+            build_type: raspi
+          - debian_version: buster
+            build_type: raspi
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+        ref: ${{ github.event.inputs.tag }}
+    - name: Set GIT_VERSION
+      run: echo "GIT_VERSION=$(git describe --tags)" >> $GITHUB_ENV
+    - name: Set DEB_REVISION
+      shell: bash
+      run: |
+        revision="${{ github.event.inputs.debian_revision }}"
+        if [[ -n "$revision" ]]; then
+          echo "DEB_REVISION=${revision}" >> $GITHUB_ENV
+        else
+          echo "DEB_REVISION=1" >> $GITHUB_ENV
+        fi
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+    - name: Build Dockerfile
+      run: docker build --target deb_make --tag deb_make --file .github/ci/Dockerfile --build-arg GIT_VERSION --build-arg DEB_REVISION --build-arg DOCKER_ARCH --build-arg DEBIAN_VERSION --build-arg BUILD_TYPE .
+      env:
+        DEBIAN_VERSION: ${{ matrix.debian_version }}
+        DOCKER_ARCH: ${{ matrix.docker_arch }}/
+        BUILD_TYPE: ${{ matrix.build_type }}
+    - name: Create container
+      run: docker create --name deb_make deb_make
+    - name: Copy files
+      run: 'docker cp deb_make:/deb/. deb/'
+    - name: 'Upload debian files'
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.debian_version }}-${{ matrix.docker_arch }}-${{ matrix.build_type }}.zip
+        path: deb/
+        retention-days: 14
