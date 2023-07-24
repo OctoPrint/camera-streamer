@@ -1,0 +1,43 @@
+name: "Check dependencies"
+
+on:
+  schedule:
+    - cron: "42 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: "Check"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: "Cache last result"
+      uses: actions/cache@v3
+      with:
+        path: last.txt
+        key: ${{ runner.os }}-check-deps-v1.0
+
+    - name: "Lookup libcamera0 version"
+      id: libcamera0_version
+      uses: OctoPrint/actions/latest-apt-version@main
+      with:
+        package: libcamera0
+        url: http://archive.raspberrypi.org/debian/dists/bullseye/main/binary-armhf/Packages
+    
+    - name: "Create new result"
+      id: new_result
+      run: |
+        touch last.txt
+        echo "libcamera0: ${{ steps.libcamera0_version.outputs.version }}" > new.txt
+        
+        same=$(diff last.txt new.txt > /dev/null && echo "same" || echo "different")
+        echo "same=$same" >> "$GITHUB_OUTPUT"
+
+        cp new.txt last.txt
+        cat last.txt
+    
+    - name: "Trigger build if there is a new version"
+      if: ${{ steps.new_result.outputs.same == 'different' }}
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: build_revision.yaml
