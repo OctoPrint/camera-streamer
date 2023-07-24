@@ -41,7 +41,7 @@ jobs:
         set -e
         revision="${{ github.event.inputs.deb_revision }}"
         if [[ -z "$revision" ]]; then
-          current=$(curl -s https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${GIT_VERSION} | jq -r ".assets[].name" | grep "camera-streamer-raspi.*_armhf.deb" | cut -d "_" -f 2 | cut -d "-" -f 2)
+          current=$(curl -s https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${GIT_VERSION} | jq -r ".assets[].name" | grep "camera-streamer-raspi.*_armhf.deb" | cut -d "_" -f 2 | cut -d "-" -f 2 | sort -nr | head -n1)
           echo "Found current revision $current"
           revision=$(expr $current + 1)
         fi
