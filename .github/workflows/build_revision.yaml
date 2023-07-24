@@ -27,20 +27,25 @@ jobs:
     - name: Determine latest tag
       id: get_tag
       run: |
+        set -e
         tag="${{ github.event.inputs.tag }}"
         if [[ -z "$tag" ]]; then
           tag=$(git describe --tags --abbrev=0)
         fi
+        echo "Set tag to $tag"
         echo "tag=$tag" >> "$GITHUB_OUTPUT"
         echo "GIT_VERSION=$tag" >> "$GITHUB_ENV"
     - name: Determine latest revision
       id: get_revision
       run: |
+        set -e
         revision="${{ github.event.inputs.deb_revision }}"
         if [[ -z "$revision" ]]; then
           current=$(curl -s https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${GIT_VERSION} | jq -r ".assets[].name" | grep "camera-streamer-raspi.*_armhf.deb" | cut -d "_" -f 2 | cut -d "-" -f 2)
-          revision="$((${current}+1))"
+          echo "Found current revision $current"
+          revision=$(expr $current + 1)
         fi
+        echo "Set revision to $revision"
         echo "revision=$revision" >> "$GITHUB_OUTPUT"
 
   build:
