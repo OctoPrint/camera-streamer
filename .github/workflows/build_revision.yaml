@@ -55,13 +55,11 @@ jobs:
       contents: write
     strategy:
       matrix:
-        debian_version: [bullseye]
-        docker_arch: [amd64, arm32v7, arm64v8]
+        debian_version: [bullseye, bookworm]
+        docker_platform: [linux/amd64, linux/arm/v7, linux/arm64/v8]
         build_type: [generic, raspi]
         exclude:
-          - docker_arch: amd64
-            build_type: raspi
-          - debian_version: buster
+          - docker_platform: linux/amd64
             build_type: raspi
     steps:
     - name: Checkout
@@ -84,10 +82,9 @@ jobs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
     - name: Build Dockerfile
-      run: docker build --target deb_make --tag deb_make --file .github/ci/Dockerfile --build-arg GIT_VERSION --build-arg DEB_REVISION --build-arg DOCKER_ARCH --build-arg DEBIAN_VERSION --build-arg BUILD_TYPE .
+      run: docker build --target deb_make --tag deb_make --file .github/ci/Dockerfile --build-arg GIT_VERSION --build-arg DEB_REVISION --build-arg DEBIAN_VERSION --build-arg BUILD_TYPE --platform "${{ matrix.docker_platform }}" .
       env:
         DEBIAN_VERSION: ${{ matrix.debian_version }}
-        DOCKER_ARCH: ${{ matrix.docker_arch }}/
         BUILD_TYPE: ${{ matrix.build_type }}
     - name: Create container
       run: docker create --name deb_make deb_make
