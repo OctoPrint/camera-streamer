@@ -1,22 +1,29 @@
 on:
   push:
     paths-ignore:
-      - '.github/workflows/build_test.yaml'
+      #- '.github/workflows/build_test.yaml'
       - 'RELEASE.md'
   pull_request:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
     strategy:
       matrix:
+        os: ["ubuntu-latest", "ubuntu-22.04-arm"]
         debian_version: [bullseye, bookworm]
         docker_platform: [linux/amd64, linux/arm/v7, linux/arm64/v8]
         build_type: [generic, raspi]
         exclude:
           - docker_platform: linux/amd64
             build_type: raspi
+          - docker_platform: linux/amd64
+            os: ubuntu-22.04-arm
+          - docker_platform: linux/arm/v7
+            os: ubuntu-latest
+          - docker_platform: linux/arm64/v8
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -25,9 +32,10 @@ jobs:
         submodules: recursive
     - name: Set GIT_VERSION
       run: echo "GIT_VERSION=$(git describe --tags)" >> $GITHUB_ENV
-    - name: Set up QEMU
-      run: |
-        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes -c yes
+    #- name: Set up QEMU
+    #  if: ${{ matrix.os == 'ubuntu-latest' }}
+    #  run: |
+    #    docker run --rm --privileged --platform "${{ matrix.docker_platform }}" multiarch/qemu-user-static --reset -p yes -c yes
     - name: Build Dockerfile
       run: docker build --target deb_make --tag deb_make --file .github/ci/Dockerfile --build-arg GIT_VERSION --build-arg DEBIAN_VERSION --build-arg BUILD_TYPE --platform "${{ matrix.docker_platform }}" .
       env:
