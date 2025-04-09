@@ -19,14 +19,14 @@ jobs:
             build_type: raspi
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive
     - name: Set GIT_VERSION
       run: echo "GIT_VERSION=$(git describe --tags)" >> $GITHUB_ENV
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
     - name: Build Dockerfile
       run: docker build --target deb_make --tag deb_make --file .github/ci/Dockerfile --build-arg GIT_VERSION --build-arg DEBIAN_VERSION --build-arg BUILD_TYPE --platform "${{ matrix.docker_platform }}" .
       env:
@@ -42,7 +42,7 @@ jobs:
         DOCKER_PLATFORM=$(echo $RAW_DOCKER_PLATFORM | sed 's!/!_!g')
         echo "DOCKER_PLATFORM=$DOCKER_PLATFORM" >> $GITHUB_ENV
     - name: 'Upload debian files'
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.debian_version }}-${{ env.DOCKER_PLATFORM }}-${{ matrix.build_type }}.zip
         path: deb/

@@ -16,7 +16,7 @@ jobs:
             build_type: raspi
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive
@@ -36,7 +36,7 @@ jobs:
         echo "MajorVer=$majorVer LastVer=$lastVer NextVer=$nextVer"
         echo "GIT_VERSION=${nextVer//v/}" >> $GITHUB_ENV
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
     - name: Build Dockerfile
       run: docker build --target deb_make --tag deb_make --file .github/ci/Dockerfile --build-arg GIT_VERSION --build-arg DEBIAN_VERSION --build-arg BUILD_TYPE --platform "${{ matrix.docker_platform }}" .
       env:
@@ -64,7 +64,7 @@ jobs:
     needs: [build]
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: recursive

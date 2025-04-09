@@ -12,7 +12,7 @@ jobs:
 
     steps:
     - name: "Cache last result"
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: last.txt
         key: ${{ runner.os }}-check-deps-v1.0
