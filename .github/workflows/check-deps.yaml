@@ -1,0 +1,59 @@
+name: "Check dependencies"
+
+on:
+  schedule:
+    - cron: "42 * * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: "Check"
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: "Cache last result"
+      uses: actions/cache@v4
+      with:
+        path: last*.txt
+        key: ${{ runner.os }}-check-deps-v2.0
+
+    - name: "Lookup libcamera version in bullseye"
+      id: libcamera_version_bullseye
+      uses: OctoPrint/actions/latest-apt-version@main
+      with:
+        package: libcamera0
+        url: http://archive.raspberrypi.org/debian/dists/bullseye/main/binary-armhf/Packages
+    
+    - name: "Lookup libcamera version in bookworm"
+      id: libcamera_version_bookworm
+      uses: OctoPrint/actions/latest-apt-version@main
+      with:
+        package: libcamera0.5
+        url: http://archive.raspberrypi.org/debian/dists/bookworm/main/binary-armhf/Packages
+    
+    - name: "Create new result"
+      id: new_result
+      run: |
+        touch last_bullseye.txt
+        echo "libcamera: ${{ steps.libcamera_version_bullseye.outputs.version }}" > new_bullseye.txt
+        same_bullseye=$(diff last_bullseye.txt new_bullseye.txt > /dev/null && echo "same" || echo "different")
+        
+        touch last_bookworm.txt
+        echo "libcamera: ${{ steps.libcamera_version_bookworm.outputs.version }}" > new_bookworm.txt
+        same_bookworm=$(diff last_bookworm.txt new_bookworm.txt > /dev/null && echo "same" || echo "different")
+
+        echo "same=${same_bullseye}${same_bookworm}" >> "$GITHUB_OUTPUT"
+
+        echo "Bullseye"
+        cp new_bullseye.txt last_bullseye.txt
+        cat last_bullseye.txt
+
+        echo "Bookworm"
+        cp new_bookworm.txt last_bookworm.txt
+        cat last_bookworm.txt
+    
+    #- name: "Trigger build if there is a new version"
+    #  if: ${{ steps.new_result.outputs.same != 'samesame' }}
+    #  uses: benc-uk/workflow-dispatch@v1
+    #  with:
+    #    workflow: build_revision.yaml
